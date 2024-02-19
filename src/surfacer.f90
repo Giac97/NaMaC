@@ -15,7 +15,8 @@ module surfacer
         integer     ::  i, j, N_atoms
         
         N_atoms = size(gcn)
-        
+        !$ACC KERNELS
+        !$ACC LOOP INDEPENDENT
         do i = 1, N_atoms
             if (gcn.le.gcn_cutoff) is_surface(i) = 1
             else
