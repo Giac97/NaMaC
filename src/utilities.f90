@@ -1,9 +1,9 @@
 module utilities
     implicit none
     private
-    public: read_xyz
+    public: read_xyz, distance2, distance, coordination_calc 
     
-    contains
+contains
 
     !> @brief Reads an xyz file, reads the coordinates and saves them to an array
     !!
@@ -119,5 +119,5 @@ module utilities
                 endif
             enddo
         enddo
-            
+    end subroutine coordinaion_calc            
 end module utilities
