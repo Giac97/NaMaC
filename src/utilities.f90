@@ -40,7 +40,7 @@ module utilities
     !!
     !!@param[in]    pointA  The coordinates of one of the points
     !!@param[in]    pointB  The coordinates of the other point
-    !!@param[out]   distance2   The square of the distance between two points
+    !!@param[out]   distance2   The square of the distance between the two points
     subroutine distance2(pointA, pointB, distance2)
         implicit none
         real, intent(in)    ::  pointA(3), pointB(3)
@@ -49,6 +49,24 @@ module utilities
         
         dist_vec = pointB - pointA     
         distance2 = dist_vec(1) * dist_vec(1) + dist_vec(2) * dist_vec(2) + dist_vec(3) * dist_vec(3)  
-    end subroutine
+    end subroutine distance
+    
+    !> @brief Utility function that computes the distance between two points
+    !!
+    !! This subroutine computes the distance between two points. If the actual distance is not essential
+    !! and if it has to be computed for a large number of pairs of atoms use the distance2 subroutine
+    !! as the calculation of the square root is quite expensive
+    !!
+    !!@param[in]    pointA  The coordinates of one of the points
+    !!@param[in]    pointB  The coordinates of the other point
+    !!@param[out]   distance    The distance between the two points
+    subroutine distance(pointA, pointB, distance)
+        implicit none
+        real, intent(in)    ::  pointA(3), pointB(3)
+        real, intent(out)   ::  distance
+        real                ::  d2
 
+        call distance2(pointA, pointB, d2)
+        distance = sqrt(d2)
+    end subroutine distance
 end module utilities
