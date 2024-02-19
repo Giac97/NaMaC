@@ -69,4 +69,55 @@ module utilities
         call distance2(pointA, pointB, d2)
         distance = sqrt(d2)
     end subroutine distance
+
+    !> @brief Computes for each atom its coordination number
+    !!
+    !! For each atom in the system the coordination number is computed as
+    !! the number of other atoms within a certain cutoff distance, if desired
+    !! (as set by the pbc variable) it compute the distance using periodic boundary
+    !! conditions. Also returns a list of neighbours for each atom as a list of 
+    !! indeces pointing to the atoms neighboring the atom
+    !!
+    !!@param[in]    coordinates 3xN_atoms array of the cooridnates of the atoms
+    !!@param[in]    cutoff  real number determining the cutoff for the neighbors 
+    !!@param[out]   coordination    array containing for each atom its coordination number
+    !!@param[out]   neigh_list  array containing for each atom the indeces of its neighbors
+    subroutine coordination_calc(coordinates, cutoff, pbc, coordination, neigh_list)
+        implicit none
+        integer :: N_atoms, i, j
+        real, intent(in) :: coordinates(:, :)
+        real, intent(in) :: cutoff
+        integer,intent(in)  ::  pbc
+        integer, intent(out), allocatable :: coordination(:), neigh_list(:,:)
+        real :: dist
+        real :: distance_v(3)
+        integer :: neighbors, co2
+        real :: Lx, Ly
+        if ( pbc.eq.1) then
+            Lx = maxval(coordinates(1, :)) - minval(coordinates(1,:))
+            Ly = maxval(coordinates(2, :)) - minval(coordinates(2,:))
+        endif
+        N_atoms = size(coordinates, 2)
+        allocate(coordination(N_atoms), neigh_list(12,N_atoms))
+        !$ACC KERNELS
+        !$ACC LOOP INDEPENDENT
+        do i = 1, N_atoms
+            neighbors = 0
+            do j = 1, N_atoms
+                if (i .ne. j) then
+                    distance_v(:) = coordinates(:, i) - coordinates(:, j)
+                    if (pbc.eq.1.and.abs(distance_v(1)) .gt. Lx / 2) then
+                        distance_v(1) = Lx - abs(distance_v(1))
+                    elseif (pbc.eq.1.and.abs(distance_v(2)) .gt. Ly / 2) then
+                        distance_v(2) = Ly - abs(distance_v(2))
+                    endif
+                    call distance(dist)
+                    if (dist .lt. cutoff) then
+                        neighbors = neighbors + 1
+                        neigh_list(neighbors, i) = j
+                    endif
+                endif
+            enddo
+        enddo
+            
 end module utilities
