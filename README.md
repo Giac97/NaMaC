@@ -1,4 +1,5 @@
-# NaMaC
+# NaMaC 
+<img src="https://github.com/Giac97/NaMaC/assets/126502167/2d04f878-6827-462b-99d9-c61f3d51bffb" alt="namac_logo" width="300" height="200">
 
 NaMaC, Nanoporous Material Characterizer is a compact code devised to perform characterization of nanoporous materials, its main functionalities comprise, so far, a code that computes the coordination number and generalized coordination number from an xyz file and from that it identifies the atoms that lie on the surface, then it computes the porosity of the system by using a Monte Carlo integration method. 
 
