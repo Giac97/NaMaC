@@ -16,12 +16,10 @@ program namac
     do i = 1, command_argument_count()
         call get_command_argument(i, arg)
         
-        if (trim(arg) == "-help") then
+        if (trim(arg) .eq. "--help" .or. trim(arg) .eq. "-h") then
             print*, ""
             print*, "use -i or --infile to enter the name of the input file"
-            
-
-        
+            stop 
         else if (trim(arg).eq. "-i" .or. trim(arg).eq."--infile") then
             if (i < command_argument_count()) then
                 call get_command_argument(i + 1, arg)

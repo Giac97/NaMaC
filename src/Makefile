@@ -3,6 +3,9 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 FC := pgf90 -acc
 FCFLAGS := -acc
 LD := $(FC)
+
+RM := rm -f
+
 SRCS := utilities.f90 \
 		porosity.f90 \
 		surfacer.f90 \
