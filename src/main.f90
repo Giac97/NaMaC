@@ -6,13 +6,33 @@ program namac
     real, allocatable       ::  coordinates(:,:), gcn(:)
     integer, allocatable    ::  coordination(:), neigh_list(:,:), is_surface(:)
     real                    ::  r_atom , r_probe 
-    integer                 ::  n_samples, acc, pbc
+    integer                 ::  n_samples, acc, pbc, i
     real                    ::  pore, CNmax, cutoff, gcn_cutoff
     real, allocatable       ::  insert(:,:)
 
 
-    character(len=20)   ::  fname
+    character(len=20)   ::  fname, infile, arg
     character(len=50)   ::  outname, gcname, surfname, porname
+    do i = 1, command_argument_count()
+        call get_command_argument(i, arg)
+        
+        if (trim(arg) == "-help") then
+            print*, ""
+            print*, "use -i or --infile to enter the name of the input file"
+            
+
+        
+        else if (trim(arg).eq. "-i" .or. trim(arg).eq."--infile") then
+            if (i < command_argument_count()) then
+                call get_command_argument(i + 1, arg)
+                read(arg, *) infile
+            else
+                print *, "File name requires a value"
+                stop
+            endif
+        endif
+
+    enddo
 
 
     fname = "large.xyz"
@@ -20,7 +40,7 @@ program namac
     namelist/porosity/r_atom, r_probe, n_samples
     ! Call the subroutine to read coordinates from a file
     
-    open(25, file="input.in", status="old", action="read")
+    open(25, file=infile, status="old", action="read")
     read(25, parameters)
     read(25, porosity)
     close(25)
