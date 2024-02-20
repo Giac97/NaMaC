@@ -31,3 +31,19 @@ The input file is a text file containing parameters for the calculation, it is a
     r_atom = 2.5
 /
 ```
+
+The **parameters** inputs are:
+- fname: the name of the xyz file containing the structure
+- cutoff: the neighbour cutoff distance
+- CNmax: The maximum coordination number (12 for fcc)
+- gcn_cutoff: The GCN cutoff to separate surface from bulk
+- pbc: Whether to use (1) or not (0) periodic boundary codnitions when finding neighbors (to be implemented!)
+
+The **porosity** inputs are:
+- n_samples: The numbe rof attempted insertions of probe atoms
+- r_probe: The radius of the probe atom
+- r_atom: The radius of the atoms composing the system (For now only monometallic systems)
+
+## Compilation
+
+A Makefile is provided with the code, this however requires the PGI Fortran compiler part of the Nvidia HPC toolkit, will be updated to add the possibility to compile for serial CPU machines using gfortran when possible
