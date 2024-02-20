@@ -1,7 +1,8 @@
 module utilities
     implicit none
     private
-    public:: read_xyz, distance2, distance, coordination_calc 
+    public:: read_xyz, distance2, distance, coordination_calc, write_xyz_coordination, gcn_calc, write_xyz_gcn
+ 
     
 contains
 
@@ -118,7 +119,64 @@ contains
                     endif
                 endif
             enddo
+            coordination(i) = neighbors
         enddo
         !$ACC END KERNELS
-    end subroutine coordination_calc            
+    end subroutine coordination_calc     
+
+    subroutine write_xyz_coordination(fname, coordinates, coordination)
+        implicit none
+        character(len=50), intent(in)   ::  fname
+        real, intent(in)                ::  coordinates(:,:)
+        integer, intent(in)             ::  coordination(:)
+        integer                         ::  N_atoms, i
+
+        N_atoms = size(coordination)
+
+        open(10, file = fname, status = "replace", action = "write", form="formatted")
+        
+        write(10, *) N_atoms
+        write(10, *) "# extended xyz with coordination number"
+
+        do i = 1, N_atoms
+            write(10, '(A2, 3f15.3, I3)') "Au", coordinates(:, i), coordination(i) 
+        enddo
+        close(10)
+    end subroutine write_xyz_coordination
+
+    subroutine gcn_calc(coordination, neigh_list, gcn_max ,gcn)
+        implicit none
+        integer, intent(in) ::  neigh_list(:,:), coordination(:)
+        real, intent(in)    ::  gcn_max
+        real, intent(out), allocatable   ::  gcn(:)
+        integer             ::  N_atoms, i
+
+        N_atoms = size(coordination)
+        allocate(gcn(N_atoms))
+        do i = 1, N_atoms
+            gcn(i) = sum(coordination(neigh_list(:,i))) / gcn_max
+        enddo
+
+    end subroutine gcn_calc
+
+
+    subroutine write_xyz_gcn(fname, coordinates, gcn)
+        implicit none
+        character(len=50), intent(in)   ::  fname
+        real, intent(in)                ::  coordinates(:,:), gcn(:)
+        integer                         ::  N_atoms, i
+
+        N_atoms = size(gcn)
+
+        open(10, file = fname, status = "replace", action = "write", form="formatted")
+        
+        write(10, *) N_atoms
+        write(10, *) "# extended xyz with coordination number"
+
+        do i = 1, N_atoms
+            write(10, '(A2, 4f15.3)') "Au", coordinates(:, i), gcn(i) 
+        enddo
+        close(10)
+    end subroutine write_xyz_gcn
+
 end module utilities
