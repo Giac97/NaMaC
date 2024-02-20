@@ -62,6 +62,7 @@ contains
     !!@param[in]    pointB  The coordinates of the other point
     !!@param[out]   distance    The distance between the two points
     subroutine distance(pointA, pointB, dist)
+        !$ACC ROUTINE
         implicit none
         real, intent(in)    ::  pointA(3), pointB(3)
         real, intent(out)   ::  dist
@@ -144,22 +145,28 @@ contains
         close(10)
     end subroutine write_xyz_coordination
 
-    subroutine gcn_calc(coordination, neigh_list, gcn_max ,gcn)
+    !> @brief Computes the generalized coordination number expressed as $GCN = \sum_{j \in neigh} CN_j/CN_{max}$
+    !!
+    !!@param[in]    coordination    Array containing for each atoms its coordination number
+    !!@param[in]    neigh_list      Array contianing for each atom the list of its neighbor's indeces
+    !!@param[in]    cn_max          Maximum number of neighbors, 12 for fcc
+    !!@param[out]   gcn             Array containing for each atom ts generalized coordination number
+    subroutine gcn_calc(coordination, neigh_list, cn_max ,gcn)
         implicit none
         integer, intent(in) ::  neigh_list(:,:), coordination(:)
-        real, intent(in)    ::  gcn_max
+        real, intent(in)    ::  cn_max
         real, intent(out), allocatable   ::  gcn(:)
         integer             ::  N_atoms, i
 
         N_atoms = size(coordination)
         allocate(gcn(N_atoms))
         do i = 1, N_atoms
-            gcn(i) = sum(coordination(neigh_list(:,i))) / gcn_max
+            gcn(i) = sum(coordination(neigh_list(:,i))) / cn_max
         enddo
 
     end subroutine gcn_calc
 
-
+    
     subroutine write_xyz_gcn(fname, coordinates, gcn)
         implicit none
         character(len=50), intent(in)   ::  fname

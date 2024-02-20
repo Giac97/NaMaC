@@ -4,7 +4,19 @@ module porosity
     private
     public  ::  find_porosity, write_xyz_porosity
 contains
-
+    
+    !> @brief Computes the porosity of a structure given the coordinates of the atoms
+    !!
+    !! Using a MOnte Carlo integration scheme, the subroutine computes the porosity of an assembly of atoms
+    !! using probe atoms of a given radius
+    !!
+    !!@param[in]    coordinates Coordinates of the atoms forming the structure
+    !!@param[in]    r_atoms     Radius of the atoms forming the structure
+    !!@param[in]    r_probe     Radius of the probe atoms (can be 0.0 for ideal point like probes)
+    !!@param[in]    n_samples   Total number of attempted insertions
+    !!@param[out]   pore        The porosity (acc/n_samples)
+    !!@param[out]   insert      Array containing the coordinates of the inserted probe atoms (the non inserted have p = (0,0,0))
+    !!@param[out]   acc         Number of accepted insertion (used by write_xyz_porosity)
     subroutine find_porosity(coordinates, r_atoms, r_probe, n_samples, pore, insert, acc)
         implicit none
         real, intent(in)        ::  coordinates(:,:)
