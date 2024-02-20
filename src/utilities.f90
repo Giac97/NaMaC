@@ -1,7 +1,7 @@
 module utilities
     implicit none
     private
-    public: read_xyz, distance2, distance, coordination_calc 
+    public:: read_xyz, distance2, distance, coordination_calc 
     
 contains
 
@@ -41,15 +41,15 @@ contains
     !!@param[in]    pointA  The coordinates of one of the points
     !!@param[in]    pointB  The coordinates of the other point
     !!@param[out]   distance2   The square of the distance between the two points
-    subroutine distance2(pointA, pointB, distance2)
+    subroutine distance2(pointA, pointB, dist2)
         implicit none
         real, intent(in)    ::  pointA(3), pointB(3)
-        real, intent(out)   ::  distance2
-        real                ::  dist_vec
+        real, intent(out)   ::  dist2
+        real                ::  dist_vec(3)
         
         dist_vec = pointB - pointA     
-        distance2 = dist_vec(1) * dist_vec(1) + dist_vec(2) * dist_vec(2) + dist_vec(3) * dist_vec(3)  
-    end subroutine distance
+        dist2 = dist_vec(1) * dist_vec(1) + dist_vec(2) * dist_vec(2) + dist_vec(3) * dist_vec(3)  
+    end subroutine distance2
     
     !> @brief Utility function that computes the distance between two points
     !!
@@ -60,14 +60,14 @@ contains
     !!@param[in]    pointA  The coordinates of one of the points
     !!@param[in]    pointB  The coordinates of the other point
     !!@param[out]   distance    The distance between the two points
-    subroutine distance(pointA, pointB, distance)
+    subroutine distance(pointA, pointB, dist)
         implicit none
         real, intent(in)    ::  pointA(3), pointB(3)
-        real, intent(out)   ::  distance
+        real, intent(out)   ::  dist
         real                ::  d2
 
         call distance2(pointA, pointB, d2)
-        distance = sqrt(d2)
+        dist = sqrt(d2)
     end subroutine distance
 
     !> @brief Computes for each atom its coordination number
@@ -111,7 +111,7 @@ contains
                     elseif (pbc.eq.1.and.abs(distance_v(2)) .gt. Ly / 2) then
                         distance_v(2) = Ly - abs(distance_v(2))
                     endif
-                    call distance(dist)
+                    call distance(coordinates(:,i), coordinates(:,j), dist)
                     if (dist .lt. cutoff) then
                         neighbors = neighbors + 1
                         neigh_list(neighbors, i) = j
@@ -119,5 +119,6 @@ contains
                 endif
             enddo
         enddo
-    end subroutine coordinaion_calc            
+        !$ACC END KERNELS
+    end subroutine coordination_calc            
 end module utilities
