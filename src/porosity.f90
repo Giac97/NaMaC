@@ -2,7 +2,7 @@ module porosity
     use utilities
     implicit none
     private
-    public  ::  find_porosity, write_xyz_porosity
+    public  ::  find_porosity, write_xyz_porosity, slice_porosity
 contains
     
     !> @brief Computes the porosity of a structure given the coordinates of the atoms
@@ -106,4 +106,52 @@ contains
         close(10)
             
     end subroutine
+
+    subroutine slice_porosity(coordinates, r_atoms, r_probe, n_samples, N_layers, slice_file)
+        implicit none
+        real, intent(in)        ::  coordinates(:,:)
+        real, intent(in)        ::  r_atoms, r_probe
+        integer, intent(in)     ::  n_samples
+        integer, intent(in)     ::  N_layers
+        character(len=50)       ::  slice_file
+        
+        integer     ::  i, j, N_per_slice, idx, acc, N_atoms
+        real        ::  pore, Lz, dz, z_min, z_max
+        real, allocatable   ::  insert(:,:)
+        real, allocatable   ::  slice(:,:)        
+        allocate(insert(3,n_samples))
+        N_atoms = size(coordinates, 2)
+        Lz = maxval(coordinates(3,:)) - minval(coordinates(3,:))
+        dz = Lz / real(N_layers)
+        open(50, file=slice_file, status="replace", action="write")
+        z_min = minval(coordinates(3,:))
+        do i = 1, N_layers
+            write(*,*) "Evaluating porosity in slice ", i, " of ", N_layers
+            pore = 0
+            acc = 0
+            
+            z_max = z_min + dz
+            N_per_slice = count(coordinates(3,:) .lt. z_max .and. coordinates(3,:) .ge. z_min)
+            write(*,*) "Number of atoms in slice ", z_min ," to ", z_max, " = ", N_per_slice
+            allocate(slice(3, N_per_slice))    
+            idx = 1
+            do j = 1, N_atoms
+                if (coordinates(3,j) .lt. z_max .and. coordinates(3,j) .ge. z_min) then
+                    slice(:,idx) = coordinates(:,j)
+                    idx = idx + 1
+                endif
+            enddo
+            call find_porosity(slice, r_atoms, r_probe, n_samples, pore, insert, acc)
+            write(*,*) "finished slice"
+            write(50, '(2I4, 3F10.5)')N_per_slice, i, pore, z_min, z_max
+            z_min = z_min + dz
+            write(*,*) z_min
+            deallocate(slice)
+        enddo
+        
+        close(50)
+        deallocate(insert)
+    end subroutine slice_porosity
+        
+
 end module porosity
