@@ -81,10 +81,11 @@ contains
         pore = real(acc) / real(n_samples)
     end subroutine find_porosity
 
-    !> @brief Computes the porosity of a structure given the coordinates of the atoms
+    !> @brief Computes the porosity of a structure given the coordinates of the atoms in a box with fixed x, y sides
     !!
     !! Using a MOnte Carlo integration scheme, the subroutine computes the porosity of an assembly of atoms
-    !! using probe atoms of a given radius
+    !! using probe atoms of a given radius in a box with fixed x, y sides. Used in computing the porosity in slices to 
+    !! avoid shrinking 
     !!
     !!@param[in]    coordinates Coordinates of the atoms forming the structure
     !!@param[in]    r_atoms     Radius of the atoms forming the structure
@@ -93,6 +94,10 @@ contains
     !!@param[out]   pore        The porosity (acc/n_samples)
     !!@param[out]   insert      Array containing the coordinates of the inserted probe atoms (the non inserted have p = (0,0,0))
     !!@param[out]   acc         Number of accepted insertion (used by write_xyz_porosity)
+    !!@param[in]    x_min       The lower x bound of the box
+    !!@param[in]    x_max       The upper x bound of the box
+    !!@param[in]    y_min       The lower y bound of the box
+    !!@param[in]    y_max       The upper y bound of the box
     subroutine find_porosity_fixed_box(coordinates, r_atoms, r_probe, n_samples, pore, insert, acc, x_min, x_max, y_min, y_max)
         implicit none
         real, intent(in)        ::  coordinates(:,:)
@@ -177,7 +182,14 @@ contains
         close(10)
             
     end subroutine
-
+    !> @brief Uses the MC method to compute the porosity in slices of the material from the bottom to the top,
+    !!
+    !!@param[in]    coordinates Array of the coordinates of the atoms in the system
+    !!@param[in]    r_atoms     Radius of the atoms in the system
+    !!@param[in]    r_probe     Radius of the fictitious probe atoms
+    !!@param[in]    n_samples   The number of samples per slice
+    !!@param[in]    N_layers    The number of slices in the system
+    !!@param[out]   slice_file  The output file for the porosity at each slice
     subroutine slice_porosity(coordinates, r_atoms, r_probe, n_samples, N_layers, slice_file)
         implicit none
         real, intent(in)        ::  coordinates(:,:)
