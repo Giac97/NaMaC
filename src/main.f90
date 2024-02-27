@@ -8,7 +8,7 @@ program namac
     real                    ::  r_atom , r_probe 
     integer                 ::  n_samples, acc, pbc, i
     integer                 ::  N_slices, samples_per_slice
-    real                    ::  pore, CNmax, cutoff, gcn_cutoff
+    real                    ::  pore, CNmax, cutoff, gcn_cutoff, err
     real, allocatable       ::  insert(:,:)
 
 
@@ -66,7 +66,7 @@ program namac
         write(*,*) "Now the gcn"
         call  gcn_calc(coordination, neigh_list, 12.0, gcn)
         write(*,*) "GCN computed"
-
+        write(*,*) "Fraction of atoms on surface: ", real(sum(is_surface)) / real(size(coordinates, 2))
         write(*,*) "Outputting all files"
         call write_xyz_coordination(outname, coordinates, coordination)
         call write_xyz_gcn(gcname, coordinates, gcn)
@@ -77,8 +77,8 @@ program namac
         write(*,*) "Well, if you do not have a CUDA GPU then you'll be right"
         write(*,*) "Now here is the longest calculation, this bad boy can not be parallelized due to some exit clauses"
         write(*,*) "Computing the porosity"
-        call find_porosity(coordinates, r_atom, r_probe, n_samples, pore, insert, acc)
-        write(*,*) "Porosity = ", pore
+        call find_porosity(coordinates, r_atom, r_probe, n_samples, pore, insert, acc, err)
+        write(*,*) "Porosity = ", pore, " +/- ", err
         call write_xyz_porosity(porname, coordinates, insert, acc)
     else if (mode.eq."full".or.mode.eq."slice") then
         call slice_porosity(coordinates, r_atom, r_probe, samples_per_slice, N_slices, slice_file)

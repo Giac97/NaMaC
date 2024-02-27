@@ -17,7 +17,7 @@ contains
     !!@param[out]   pore        The porosity (acc/n_samples)
     !!@param[out]   insert      Array containing the coordinates of the inserted probe atoms (the non inserted have p = (0,0,0))
     !!@param[out]   acc         Number of accepted insertion (used by write_xyz_porosity)
-    subroutine find_porosity(coordinates, r_atoms, r_probe, n_samples, pore, insert, acc)
+    subroutine find_porosity(coordinates, r_atoms, r_probe, n_samples, pore, insert, acc, err)
         implicit none
         real, intent(in)        ::  coordinates(:,:)
         real, intent(in)        ::  r_atoms, r_probe
@@ -26,16 +26,18 @@ contains
         real, intent(out)       ::  pore
         real, intent(out), allocatable  ::  insert(:,:)
         integer, intent(out)    ::  acc
+        real, intent(out)       ::  err
         real, allocatable       ::  insert_temp(:,:)
         real                    ::  test_insert(3)
         
         real                    ::  x_min, x_max 
         real                    ::  y_min, y_max
         real                    ::  z_min, z_max
-        
-        real                    ::  dist
-
-        integer                 ::  i, j, N_atoms, rej, seed, idx
+        real, allocatable       ::  porosity(:), porosity2(:)  
+        real                    ::  dist, sum_prog
+        integer                 ::  N_blocks = 100, M
+        real                    ::  Av1(N_blocks), Av2(N_blocks), Error(N_blocks), sp(N_blocks), sp2(N_blocks)
+        integer                 ::  i, j, k, N_atoms, rej, seed, idx
 
         N_atoms = size(coordinates, 2)
         
@@ -48,7 +50,7 @@ contains
         z_min = minval(coordinates(3,:))
         z_max = maxval(coordinates(3,:))
         allocate(insert(3,n_samples))
-        
+        allocate(porosity(n_samples))
         acc = 0
         seed = 176 
         idx = 0
@@ -72,13 +74,44 @@ contains
                 insert(:,i) = test_insert
                 idx = idx + 1
             endif
-            
+            porosity(i) = real(acc) / real(i)
             if (mod(i,1000).eq.0) then
-                write(*,*) "Sample ", i, " of ", n_samples, ", porosity= ", real(acc) / real(i)
+                write(*,*) "Sample ", i, " of ", n_samples, ", porosity= ", porosity(i)
+                
             endif
         enddo
+        open(unit=125, file="porosity.dat", status="replace", action="write")
 
-        pore = real(acc) / real(n_samples)
+        M =   n_samples / N_blocks
+        write(*,*) "Computing errors in ", N_blocks, " blocks of length ", M
+        do i = 1, N_blocks
+            sum_prog = 0.0 
+            do j = 1, M
+                sum_prog = sum_prog + porosity(j + i * M)
+                
+            enddo
+            Av1(i) = sum_prog / M 
+            Av2(i) = Av1(i) * Av1(i)
+        enddo
+        
+        do i = 1, N_blocks
+            do j = 1, i
+               sp(i) = sp(i) + Av1(j)
+               sp2(i) = sp2(i) + Av2(j)
+            enddo
+            sp(i) = sp(i) / real(i)
+            sp2(i) = sp2(i) / real(i)
+
+            call block_error(sp(i), sp2(i), i, Error(i))
+            write(125, '(I2, 2F10.5)') i, sp(i), Error(i)
+        enddo
+            
+
+        close(125)
+    
+        deallocate(porosity)
+        pore = sp(N_blocks)
+        err = Error(N_blocks)
     end subroutine find_porosity
 
     !> @brief Computes the porosity of a structure given the coordinates of the atoms in a box with fixed x, y sides

@@ -1,7 +1,7 @@
 module utilities
     implicit none
     private
-    public:: read_xyz, distance2, distance, coordination_calc, write_xyz_coordination, gcn_calc, write_xyz_gcn
+    public:: read_xyz, distance2, distance, coordination_calc, write_xyz_coordination, gcn_calc, write_xyz_gcn, block_error
  
     
 contains
@@ -185,5 +185,18 @@ contains
         enddo
         close(10)
     end subroutine write_xyz_gcn
+    
+    subroutine block_error(av1, av2, n, error)
+        implicit none
+        real, intent(in)    ::  av1
+        real, intent(in)    ::  av2
+        integer, intent(in) ::  n
+        real, intent(out)   ::  error
 
+        if (n.eq.1) then
+            error = 0.0
+        else
+            error = sqrt( (av2 - av1 * av1) / real(n) )
+        endif
+    end subroutine block_error
 end module utilities
