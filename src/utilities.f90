@@ -52,6 +52,25 @@ contains
         dist2 = dist_vec(1) * dist_vec(1) + dist_vec(2) * dist_vec(2) + dist_vec(3) * dist_vec(3)  
     end subroutine distance2
     
+    subroutine distance2_pbc(pointA, pointB, Lx, Ly, dist2_pbc)
+        !$ACC ROUTINE
+        implicit none
+        real, intent(in)    ::  pointA(3), pointB(3)
+        real, intent(in)    ::  Lx, Ly
+        real, intent(out)   ::  dist2_pbc
+        real                ::  dist_vec(3)
+
+        dist_vec = pointB - pointA
+        if (abs(dist_vec(1)) .gt. Lx / 2) then
+            dist_vec(1) = Lx - abs(dist_vec(1))
+        elseif (abs(dist_vec(2)) .gt. Ly / 2) then
+            dist_vec(2) = Ly - abs(dist_vec(2))
+        endif
+        dist2_pbc = dist_vec(1) * dist_vec(1) + dist_vec(2) * dist_vec(2) + dist_vec(3) * dist_vec(3)  
+        
+    end subroutine distance2_pbc
+
+
     !> @brief Utility function that computes the distance between two points
     !!
     !! This subroutine computes the distance between two points. If the actual distance is not essential
@@ -71,7 +90,19 @@ contains
         call distance2(pointA, pointB, d2)
         dist = sqrt(d2)
     end subroutine distance
+    
+    subroutine distance_pbc(pointA, pointB, Lx, Ly, dist)
+        !$ACC ROUTINE
+        implicit none
+        real, intent(in)    ::  pointA(3), pointB(3)
+        real, intent(in)    ::  Lx, Ly
+        real, intent(out)   ::  dist
+        real                ::  d2
 
+        call distance2_pbc(pointA, pointB, Lx, Ly, d2)
+        dist = sqrt(d2)
+    end subroutine distance_pbc
+    
     !> @brief Computes for each atom its coordination number
     !!
     !! For each atom in the system the coordination number is computed as
@@ -113,7 +144,11 @@ contains
                     elseif (pbc.eq.1.and.abs(distance_v(2)) .gt. Ly / 2) then
                         distance_v(2) = Ly - abs(distance_v(2))
                     endif
-                    call distance(coordinates(:,i), coordinates(:,j), dist)
+                    if (pbc.eq.1) then
+                        call distance_pbc(coordinates(:,i), coordinates(:,j), Lx, Ly, dist)
+                    else
+                        call distance(coordinates(:,i), coordinates(:,j), dist)
+                    endif
                     if (dist .lt. cutoff) then
                         neighbors = neighbors + 1
                         neigh_list(neighbors, i) = j
