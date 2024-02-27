@@ -66,11 +66,11 @@ program namac
         write(*,*) "Now the gcn"
         call  gcn_calc(coordination, neigh_list, 12.0, gcn)
         write(*,*) "GCN computed"
-        write(*,*) "Fraction of atoms on surface: ", real(sum(is_surface)) / real(size(coordinates, 2))
         write(*,*) "Outputting all files"
         call write_xyz_coordination(outname, coordinates, coordination)
         call write_xyz_gcn(gcname, coordinates, gcn)
         call find_surface(gcn, is_surface, gcn_cutoff)
+        write(*,*) "Fraction of atoms on surface: ", real(sum(is_surface)) / real(size(coordinates, 2))
         call write_xyz_coordination(surfname, coordinates, is_surface) 
     else if (mode.eq."full".or.mode.eq."porofull") then 
         write(*,*) "You thought the cn took a long time?"
