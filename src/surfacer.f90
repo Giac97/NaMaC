@@ -2,7 +2,7 @@ module surfacer
     use utilities
     implicit none
     private
-    public  ::  find_surface
+    public  ::  find_surface,  output_surface_network
     !> @brief Determines whether an atom lies on the surface or is part of the bulk, returns as an array of 1s and 0s 
     !! depending on whether the i-th atoms is on the surface or not
     !!
@@ -30,4 +30,34 @@ contains
         enddo
         !$ACC END KERNELS        
     end subroutine find_surface
+
+    subroutine output_surface_network(coordinates, is_surface, neigh_list, file_name)
+        implicit none
+        real, intent(in)        ::  coordinates(:,:)
+        integer, intent(in)     ::  is_surface(:)
+        integer, intent(in)     ::  neigh_list(:,:)
+        character(len=50), intent(in)    ::  file_name
+        
+        integer     ::  N_atoms, i, j
+        integer     ::  temp_neigh(12)
+        N_atoms = size(is_surface)
+
+        open(15, file=file_name, status="replace", action="write")
+        
+        do i = 1, N_atoms
+            temp_neigh = 0
+            if (is_surface(i) .eq. 1) then
+                do j = 1, 12
+                    if (is_surface(neigh_list(j, i)) .eq. 1) then
+                        temp_neigh(j) = neigh_list(j, i)
+                    endif
+                enddo
+                write(15,'(I6, 3F15.3, 12I8)') i, coordinates(:,i), temp_neigh(:)
+            endif
+        enddo
+
+        close(15)
+    end subroutine output_surface_network
 end module surfacer
+
+

@@ -13,7 +13,8 @@ program namac
 
 
     character(len=20)   ::  fname, infile, arg, mode
-    character(len=50)   ::  outname, gcname, surfname, porname, slice_file
+    character(len=50)   ::  outname, gcname, surfname, porname, slice_file, net_name
+    net_name = "network.dat"
     infile = "input.in"
     do i = 1, command_argument_count()
         call get_command_argument(i, arg)
@@ -72,6 +73,7 @@ program namac
         call find_surface(gcn, is_surface, gcn_cutoff)
         write(*,*) "Fraction of atoms on surface: ", real(sum(is_surface)) / real(size(coordinates, 2))
         call write_xyz_coordination(surfname, coordinates, is_surface) 
+        call  output_surface_network(coordinates, is_surface, neigh_list, net_name)
     else if (mode.eq."full".or.mode.eq."porofull") then 
         write(*,*) "You thought the cn took a long time?"
         write(*,*) "Well, if you do not have a CUDA GPU then you'll be right"
