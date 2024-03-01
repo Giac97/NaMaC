@@ -11,6 +11,7 @@ contains
     subroutine find_surface(gcn, is_surface, gcn_cutoff)
         real, dimension(:), intent(in)          ::  gcn
         real,intent(in)                         ::  gcn_cutoff
+        
         integer, allocatable, intent(out)    ::  is_surface(:)
         
         integer     ::  i, j, N_atoms
