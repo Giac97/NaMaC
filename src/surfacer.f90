@@ -52,7 +52,7 @@ contains
                         temp_neigh(j) = neigh_list(j, i)
                     endif
                 enddo
-                write(15,'(I6, 3F15.3, 12I8)') i, coordinates(:,i), temp_neigh(:)
+                write(15,'(13I8)') i,  temp_neigh(:)
             endif
         enddo
 
