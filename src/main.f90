@@ -8,12 +8,12 @@ program namac
     real                    ::  r_atom , r_probe 
     integer                 ::  n_samples, acc, pbc, i
     integer                 ::  N_slices, samples_per_slice
-    real                    ::  pore, CNmax, cutoff, gcn_cutoff, err
+    real                    ::  pore, CNmax, cutoff, gcn_cutoff, err, r_atom_s
     real, allocatable       ::  insert(:,:)
 
 
     character(len=20)   ::  fname, infile, arg, mode
-    character(len=50)   ::  outname, gcname, surfname, porname, slice_file, net_name, strain_name
+    character(len=50)   ::  outname, gcname, surfname, porname, slice_file, net_name, strain_name, strain_file, strain_xyz
     net_name = "network.dat"
     strain_name = "out_strain.xyz"
     infile = "input.in"
@@ -38,15 +38,19 @@ program namac
 
     mode = "full"
     fname = "large.xyz"
+    strain_file = "strain.dat"
+    strain_xyz = "out_strain.xyz"
     namelist/parameters/fname,cutoff,CNmax,gcn_cutoff,pbc, mode
     namelist/porosity/r_atom, r_probe, n_samples
     namelist/slice/N_slices, samples_per_slice
+    namelist/strain_calc/r_atom_s, strain_file, strain_xyz
     ! Call the subroutine to read coordinates from a file
     
     open(25, file=infile, status="old", action="read")
     read(25, parameters)
     read(25, porosity)
     read(25, slice)
+    read(25, strain_calc)
     close(25)
     outname = "out_cord.xyz"
     gcname = "out_gcn.xyz"
@@ -92,9 +96,9 @@ program namac
         write(*,*) "Fisrst step: building neighbour list"
         call coordination_calc(coordinates,  cutoff, pbc, coordination, neigh_list)
         write(*,*) "Neighbour list built"
-        call strain_system(coordinates, pbc,neigh_list, coordination,r_atom, strain)
+        call strain_system(coordinates, pbc,neigh_list, coordination,r_atom_s, strain)
         write(*,*) "Strain computed"
-        call write_xyz_strain(strain_name, coordinates, coordination, strain) 
+        call write_xyz_strain(strain_xyz, coordinates, coordination, strain) 
     endif
 
 
