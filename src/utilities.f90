@@ -1,7 +1,7 @@
 module utilities
     implicit none
     private
-    public:: read_xyz, distance2, distance, coordination_calc, write_xyz_coordination, gcn_calc, write_xyz_gcn, block_error
+    public:: read_xyz, distance2, distance, coordination_calc, write_xyz_coordination, gcn_calc, write_xyz_gcn, block_error, strain_system, write_xyz_strain
  
     
 contains
@@ -23,7 +23,7 @@ contains
         read(io, *) N_atoms
         read(io, *) 
         allocate(coordinates(3, N_atoms))
-        
+        write(*,*) N_atoms        
         do i = 1, N_atoms
             read(io, *) element, x_t, y_t, z_t
             coordinates(1, i) = x_t
@@ -234,4 +234,80 @@ contains
             error = sqrt( (av2 - av1 * av1) / real(n) )
         endif
     end subroutine block_error
+
+    subroutine strain_atom(coordinates, idx, neigh_list, r_atom, strain)
+        implicit none
+        real, intent(in)    ::  coordinates(:,:)
+        integer, intent(in) ::  idx
+        integer, intent(in) ::  neigh_list(:,:)
+        real, intent(in)    ::  r_atom
+        
+        real, intent(out)   ::  strain
+
+        real        ::  d_nn
+        real        ::  dist, strain_temp
+        real        ::  coord(3)
+        
+        integer     ::  i, nn, n_idx
+
+        d_nn = r_atom
+        
+        coord = coordinates(:,idx)
+        strain_temp = 0
+
+        nn = count(neigh_list(:,idx) .ne. 00)
+        do i = 1, size(neigh_list, 1)
+            n_idx = neigh_list(i, idx)
+            if (n_idx .ne. 0 .and. n_idx .ne. idx) then
+                
+                call distance(coord, coordinates(:, n_idx), dist)
+                if (dist .le. 1.15 * d_nn) then
+                    strain_temp = strain_temp + (dist - d_nn) / d_nn
+                endif
+            endif
+        enddo
+       
+        strain = 100.0 / real(nn) * strain_temp
+    end subroutine strain_atom
+
+    subroutine strain_system(coordinates, neigh_list , r_atom, strain)
+        implicit none
+        real, intent(in)    ::  coordinates(:,:)
+        integer, intent(in) ::  neigh_list(:,:)
+        real, intent(in)    ::  r_atom
+
+        real, intent(out), allocatable   ::  strain(:)
+
+        integer     ::  idx, n_atoms
+        real        ::  strain_idx
+        
+        n_atoms = size(coordinates, 2)
+        allocate(strain(n_atoms))
+        do idx = 1, n_atoms
+            call strain_atom(coordinates, idx, neigh_list, r_atom, strain_idx)
+            strain(idx) = strain_idx
+        enddo
+        
+
+    end subroutine strain_system
+    
+    subroutine write_xyz_strain(fname, coordinates, coordination, strain)
+        implicit none
+        character(len=50), intent(in)   ::  fname
+        real, intent(in)                ::  coordinates(:,:), strain(:)
+        integer, intent(in)             ::  coordination(:)
+        integer                         ::  N_atoms, i
+
+        N_atoms = size(coordination)
+
+        open(10, file = fname, status = "replace", action = "write", form="formatted")
+        
+        write(10, *) N_atoms
+        write(10, *) "# extended xyz with coordination number and strain"
+
+        do i = 1, N_atoms
+            write(10, '(A2, 4f15.3, I3)') "Au", coordinates(:, i), strain(i) ,coordination(i) 
+        enddo
+        close(10)
+    end subroutine write_xyz_strain
 end module utilities

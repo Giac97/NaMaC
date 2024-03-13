@@ -3,7 +3,7 @@ program namac
     use surfacer
     use porosity
     implicit none
-    real, allocatable       ::  coordinates(:,:), gcn(:)
+    real, allocatable       ::  coordinates(:,:), gcn(:), strain(:)
     integer, allocatable    ::  coordination(:), neigh_list(:,:), is_surface(:)
     real                    ::  r_atom , r_probe 
     integer                 ::  n_samples, acc, pbc, i
@@ -13,8 +13,9 @@ program namac
 
 
     character(len=20)   ::  fname, infile, arg, mode
-    character(len=50)   ::  outname, gcname, surfname, porname, slice_file, net_name
+    character(len=50)   ::  outname, gcname, surfname, porname, slice_file, net_name, strain_name
     net_name = "network.dat"
+    strain_name = "out_strain.xyz"
     infile = "input.in"
     do i = 1, command_argument_count()
         call get_command_argument(i, arg)
@@ -84,7 +85,15 @@ program namac
         call write_xyz_porosity(porname, coordinates, insert, acc)
     else if (mode.eq."full".or.mode.eq."slice") then
         call slice_porosity(coordinates, r_atom, r_probe, samples_per_slice, N_slices, slice_file)
+
+    else if (mode.eq."strain") then
+        allocate(strain(size(coordinates, 2)))
+        call coordination_calc(coordinates,  1.15 * r_atom, pbc, coordination, neigh_list)
+        call strain_system(coordinates, neigh_list, r_atom, strain)
+        call write_xyz_strain(strain_name, coordinates, coordination, strain) 
     endif
-    deallocate(coordination, coordinates, neigh_list, gcn)
+
+
+    deallocate(coordination, coordinates, neigh_list, gcn, strain)
     write(*,*) "Seems like we are done, hopefully nothing crashed along the way"
 end program namac
