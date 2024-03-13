@@ -131,7 +131,7 @@ contains
             Ly = maxval(coordinates(2, :)) - minval(coordinates(2,:))
         endif
         N_atoms = size(coordinates, 2)
-        allocate(coordination(N_atoms), neigh_list(12,N_atoms))
+        allocate(coordination(N_atoms), neigh_list(18,N_atoms))
         !$ACC KERNELS
         !$ACC LOOP INDEPENDENT
         do i = 1, N_atoms
@@ -149,7 +149,7 @@ contains
                     else
                         call distance(coordinates(:,i), coordinates(:,j), dist)
                     endif
-                    if (dist .lt. cutoff) then
+                    if (dist .lt. cutoff .and. neighbors .le. 17) then
                         neighbors = neighbors + 1
                         neigh_list(neighbors, i) = j
                     endif
@@ -235,45 +235,49 @@ contains
         endif
     end subroutine block_error
 
-    subroutine strain_atom(coordinates, idx, neigh_list, r_atom, strain)
+    subroutine strain_atom(coordinates, idx, pbc,neigh_list, coordination,r_atom, strain)
         implicit none
         real, intent(in)    ::  coordinates(:,:)
         integer, intent(in) ::  idx
+        integer, intent(in) ::  pbc
+        integer, intent(in) ::  coordination
         integer, intent(in) ::  neigh_list(:,:)
         real, intent(in)    ::  r_atom
         
         real, intent(out)   ::  strain
 
-        real        ::  d_nn
+        real        ::  d_nn, Lx, Ly
         real        ::  dist, strain_temp
         real        ::  coord(3)
         
         integer     ::  i, nn, n_idx
-
         d_nn = r_atom
-        
-        coord = coordinates(:,idx)
+        coord = coordinates(:,idx )
         strain_temp = 0
-
-        nn = count(neigh_list(:,idx) .ne. 00)
+        
+        nn = coordination
+         
         do i = 1, size(neigh_list, 1)
-            n_idx = neigh_list(i, idx)
-            if (n_idx .ne. 0 .and. n_idx .ne. idx) then
-                
-                call distance(coord, coordinates(:, n_idx), dist)
-                if (dist .le. 1.15 * d_nn) then
-                    strain_temp = strain_temp + (dist - d_nn) / d_nn
-                endif
+            n_idx = neigh_list(i, idx )
+            if (n_idx .ne. 0 .and. coordination .ne. 0 ) then
+                call distance(coord, coordinates(:, n_idx ), dist)
+                strain_temp = strain_temp + ( dist - d_nn) / d_nn
+                if (idx .eq. 1) write(*,*) dist
+            else if (coordination .eq. 0) then
+                strain_temp = 0
             endif
         enddo
-       
-        strain = 100.0 / real(nn) * strain_temp
+        strain = 100.0 / real(nn) * strain_temp 
+
+
     end subroutine strain_atom
 
-    subroutine strain_system(coordinates, neigh_list , r_atom, strain)
+    subroutine strain_system(coordinates, pbc,neigh_list , coordination,r_atom, strain)
         implicit none
         real, intent(in)    ::  coordinates(:,:)
-        integer, intent(in) ::  neigh_list(:,:)
+        integer, intent(in) ::  pbc
+        integer, intent(in) ::  neigh_list(:,:), coordination(:)
+
         real, intent(in)    ::  r_atom
 
         real, intent(out), allocatable   ::  strain(:)
@@ -283,11 +287,15 @@ contains
         
         n_atoms = size(coordinates, 2)
         allocate(strain(n_atoms))
+        open(420, file="nlist.dat", status="replace",action="write", form="formatted")
         do idx = 1, n_atoms
-            call strain_atom(coordinates, idx, neigh_list, r_atom, strain_idx)
-            strain(idx) = strain_idx
+
+            write(420,'(19I7)') idx, neigh_list(:,idx)
+            call strain_atom(coordinates, idx, pbc,neigh_list, coordination(idx),r_atom, strain_idx)
+            strain(idx) = strain_idx 
         enddo
         
+        close(420)
 
     end subroutine strain_system
     
@@ -301,13 +309,15 @@ contains
         N_atoms = size(coordination)
 
         open(10, file = fname, status = "replace", action = "write", form="formatted")
-        
+        open(69, file = "strain.dat", status = "replace", action = "write") !hhuhuhuhuhuhuhuhu this is cool 
         write(10, *) N_atoms
         write(10, *) "# extended xyz with coordination number and strain"
 
         do i = 1, N_atoms
-            write(10, '(A2, 4f15.3, I3)') "Au", coordinates(:, i), strain(i) ,coordination(i) 
+            write(10, '(A2, 4f15.3, I3)') "Au", coordinates(:, i), strain(i) ,coordination(i)
+            write(69, *) strain(i)
         enddo
         close(10)
+        close(69)
     end subroutine write_xyz_strain
 end module utilities

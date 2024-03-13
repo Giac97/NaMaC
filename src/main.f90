@@ -88,8 +88,12 @@ program namac
 
     else if (mode.eq."strain") then
         allocate(strain(size(coordinates, 2)))
-        call coordination_calc(coordinates,  1.15 * r_atom, pbc, coordination, neigh_list)
-        call strain_system(coordinates, neigh_list, r_atom, strain)
+        write(*,*) "Computation of the strain"
+        write(*,*) "Fisrst step: building neighbour list"
+        call coordination_calc(coordinates,  cutoff, pbc, coordination, neigh_list)
+        write(*,*) "Neighbour list built"
+        call strain_system(coordinates, pbc,neigh_list, coordination,r_atom, strain)
+        write(*,*) "Strain computed"
         call write_xyz_strain(strain_name, coordinates, coordination, strain) 
     endif
 
