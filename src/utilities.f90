@@ -235,6 +235,15 @@ contains
         endif
     end subroutine block_error
 
+    !> @brief Computes the strain for an atom given a list of coordinates and the neighbour list for each atom.
+    !!
+    !!@param[in]    coordinates     The coordinates of all atoms in the system
+    !!@param[in]    idx             THe index of the atom for which we want to compute the strain
+    !!@param[in]    pbc             Whether to use (1) or not (0) periodic boundary conditions in xy directions
+    !!@param[in]    neigh_list      Array contianing for each atom the list of its neighbor's indeces
+    !!@param[in]    coordination    Coordination number of the ith atom
+    !!@param[in]    r_atom          Atom radius in Angstrom
+    !!@param[out]   strain          The strain for the ith atom
     subroutine strain_atom(coordinates, idx, pbc,neigh_list, coordination,r_atom, strain)
         implicit none
         real, intent(in)    ::  coordinates(:,:)
